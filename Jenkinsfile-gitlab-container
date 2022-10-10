@@ -38,8 +38,8 @@ pipeline {
   options {
     disableConcurrentBuilds()
     timestamps()
-    gitLabConnection('OAI GitLab')
-    ansiColor('xterm')
+    // gitLabConnection('OAI GitLab')
+    // ansiColor('xterm')
   }
 
   stages {
