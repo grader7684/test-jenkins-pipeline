@@ -78,37 +78,7 @@ pipeline {
       }
     }
     stage ("Verify Guidelines") {
-      steps {
-        echo "Git URL     is ${GIT_URL}"
-        echo "GitLab Act    is ${env.gitlabActionType}"
-        script {
-          if ("MERGE".equals(env.gitlabActionType)) {
-            // since a bit, in push events, gitlabUserEmail is not populated
-            // gitCommitAuthorEmailAddr = env.gitlabUserEmail
-            // echo "GitLab Usermail is ${gitCommitAuthorEmailAddr}"
-            // GitLab-Jenkins plugin integration is lacking to perform the merge by itself
-            // Doing it manually --> it may have merge conflicts
-            sh "./ci-scripts/doGitLabMerge.sh --src-branch ${env.gitlabSourceBranch} --src-commit ${env.gitlabMergeRequestLastCommit} --target-branch ${env.gitlabTargetBranch} --target-commit ${GIT_COMMIT}"
-          } else {
-            echo "Git Branch    is ${GIT_BRANCH}"
-            echo "Git Commit    is ${GIT_COMMIT}"
-            // since a bit, in push events, gitlabUserEmail is not populated
-            gitCommitAuthorEmailAddr = sh returnStdout: true, script: 'git log -n1 --pretty=format:%ae ${GIT_COMMIT}'
-            gitCommitAuthorEmailAddr = gitCommitAuthorEmailAddr.trim()
-            echo "GitLab Usermail is ${gitCommitAuthorEmailAddr}"
-            sh "git log -n1 --pretty=format:\"%s\" > .git/CI_COMMIT_MSG"
-          }
-        }
-      }
-      post {
-        failure {
-          script {
-            def message = "OAI " + JOB_NAME + " build (" + BUILD_ID + "): Merge Conflicts -- Cannot perform CI"
-            addGitLabMRComment comment: message
-            currentBuild.result = 'FAILURE'
-          }
-        }
-      }
+   
     }
     // Build Stages are Mandatory
     // Later we will add a Ubuntu20 build
@@ -360,22 +330,22 @@ pipeline {
         //}
       }
     }
-    stage ("DockerHub-Push") {
-      when { expression {doBuild && "PUSH".equals(env.gitlabActionType)} }
-      steps {
-        script {
-          triggerSlaveJob ('RAN-DockerHub-Push', 'DockerHub-Push')
-        }
-      }
-      post {
-        failure {
-          script {
-            echo "Push to Docker-Hub KO"
-            currentBuild.result = 'FAILURE'
-          }
-        }
-      }
-    }
+    // stage ("DockerHub-Push") {
+    //   when { expression {doBuild && "PUSH".equals(env.gitlabActionType)} }
+    //   steps {
+    //     script {
+    //       triggerSlaveJob ('RAN-DockerHub-Push', 'DockerHub-Push')
+    //     }
+    //   }
+    //   post {
+    //     failure {
+    //       script {
+    //         echo "Push to Docker-Hub KO"
+    //         currentBuild.result = 'FAILURE'
+    //       }
+    //     }
+    //   }
+    // }
   }
   post {
     always {
