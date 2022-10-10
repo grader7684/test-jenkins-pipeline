@@ -21,7 +21,7 @@
  */
 
 // Location of the executor node
-def nodeExecutor = params.nodeExecutor
+// def nodeExecutor = params.nodeExecutor
 
 // Tags to shorten pipeline duration
 def doBuild = true
@@ -29,18 +29,10 @@ def do4Gtest = false
 def do5Gtest = false
 
 //
-def gitCommitAuthorEmailAddr
+// def gitCommitAuthorEmailAddr
 
 pipeline {
-  agent {
-    label nodeExecutor
-  }
-  options {
-    disableConcurrentBuilds()
-    timestamps()
-    // gitLabConnection('OAI GitLab')
-    // ansiColor('xterm')
-  }
+  agent any
 
   stages {
     stage ("Verify Parameters") {
@@ -92,8 +84,8 @@ pipeline {
         script {
           if ("MERGE".equals(env.gitlabActionType)) {
             // since a bit, in push events, gitlabUserEmail is not populated
-            gitCommitAuthorEmailAddr = env.gitlabUserEmail
-            echo "GitLab Usermail is ${gitCommitAuthorEmailAddr}"
+            // gitCommitAuthorEmailAddr = env.gitlabUserEmail
+            // echo "GitLab Usermail is ${gitCommitAuthorEmailAddr}"
             // GitLab-Jenkins plugin integration is lacking to perform the merge by itself
             // Doing it manually --> it may have merge conflicts
             sh "./ci-scripts/doGitLabMerge.sh --src-branch ${env.gitlabSourceBranch} --src-commit ${env.gitlabMergeRequestLastCommit} --target-branch ${env.gitlabTargetBranch} --target-commit ${GIT_COMMIT}"
