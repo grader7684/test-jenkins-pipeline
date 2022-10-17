@@ -83,7 +83,8 @@ pipeline {
             steps {
                 script {
                     dir ('ci-scripts') {
-                        echo "\u2705 \u001B[32m${testStageName}\u001B[0m"
+                        // echo "\u2705 \u001B[32m${testStageName}\u001B[0m"
+                        echo "Build and test phase"
                         // If not present picking a default XML file
                         if (params.pythonTestXmlFile == null) {
                             // picking default
