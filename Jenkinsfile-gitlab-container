@@ -30,6 +30,10 @@ def do5Gtest = false
 
 //
 def gitCommitAuthorEmailAddr = "garethm.rader@gmail.com"
+def pythonTestXmlFile = [
+"xml_files/formatting_check.xml",
+"xml_files/container_image_build.xml"
+]
 
 pipeline {
   agent any
