@@ -29,7 +29,7 @@ def do4Gtest = false
 def do5Gtest = false
 
 //
-// def gitCommitAuthorEmailAddr
+def gitCommitAuthorEmailAddr = "garethm.rader@gmail.com"
 
 pipeline {
   agent any
