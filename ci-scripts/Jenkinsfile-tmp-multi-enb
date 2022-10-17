@@ -20,66 +20,160 @@
  *      contact@openairinterface.org
  */
 
-// Location of the executor node
-// def nodeExecutor = params.nodeExecutor
+// Template Jenkins Declarative Pipeline script to run Test w/ RF HW
 
-// Tags to shorten pipeline duration
-def doBuild = true
-def do4Gtest = false
-def do5Gtest = false
+// Location of the python executor node shall be in the same subnet as the others servers
+def pythonExecutor = params.pythonExecutor
 
-//
-// def gitCommitAuthorEmailAddr
+// Location of the test XML file to be run
+def testXMLFile = params.pythonTestXmlFile
+def mainPythonAllXmlFiles = ""
+def buildStageStatus = true
+
+// Name of the test stage
+def testStageName = params.pipelineTestStageName
+
+// Name of the phone resource
+def ciSmartPhoneResource = params.smartphonesResource
+
+// Name of the phone resource
+def ciEpcResource = params.epcResource
+
+// Global Parameters. Normally they should be populated when the master job
+// triggers the slave job with parameters
+def eNB_Repository
+def eNB_Branch
+def eNB_CommitID
+def eNB_AllowMergeRequestProcess = false
+def eNB_TargetBranch
 
 pipeline {
-  agent any
+    agent {
+        label pythonExecutor
+    }
+    options {
+        disableConcurrentBuilds()
+        ansiColor('xterm')
+        lock(extra: [[resource: ciEpcResource]], resource: ciSmartPhoneResource)
+    }
+    stages {
+        stage ("Verify Parameters") {
+            steps {
+                script {
+                    echo '\u2705 \u001B[32mVerify Parameters\u001B[0m'
+                    def allParametersPresent = true
 
-  stages {
-    stage ("Verify Parameters") {
-      steps {
-        script {
-          JOB_TIMESTAMP = sh returnStdout: true, script: 'date --utc --rfc-3339=seconds | sed -e "s#+00:00##"'
-          JOB_TIMESTAMP = JOB_TIMESTAMP.trim()
+                    // It is already to late to check it
+                    if (params.pythonExecutor != null) {
+                        echo "eNB CI executor node  :   ${pythonExecutor}"
+                    }
+                    // If not present picking a default Stage Name
+                    if (params.pipelineTestStageName == null) {
+                        // picking default
+                        testStageName = 'Template Test Stage'
+                    }
 
-          echo '\u2705 \u001B[32mVerify Parameters\u001B[0m'
-          def allParametersPresent = true
+                    if (params.smartphonesResource == null) {
+                        allParametersPresent = false
+                    }
+                    // 1st eNB parameters
+                    if (params.eNB_IPAddress == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.eNB_SourceCodePath == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.eNB_Credentials == null) {
+                        allParametersPresent = false
+                    }
+                    // 2nd eNB parameters
+                    if (params.eNB1_IPAddress == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.eNB1_SourceCodePath == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.eNB1_Credentials == null) {
+                        allParametersPresent = false
+                    }
+                    // 3rd eNB parameters
+                    if (params.eNB2_IPAddress == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.eNB2_SourceCodePath == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.eNB2_Credentials == null) {
+                        allParametersPresent = false
+                    }
+                    // the following 4 parameters should be pushed by the master trigger
+                    // if not present, take the job GIT variables (used for developing)
+                    if (params.eNB_Repository == null) {
+                        eNB_Repository = env.GIT_URL
+                    } else {
+                        eNB_Repository = params.eNB_Repository
+                    }
+                    echo "eNB_Repository        :   ${eNB_Repository}"
+                    if (params.eNB_Branch == null) {
+                        eNB_Branch = env.GIT_BRANCH
+                    } else {
+                        eNB_Branch = params.eNB_Branch
+                    }
+                    echo "eNB_Branch            :   ${eNB_Branch}"
+                    if (params.eNB_CommitID == null) {
+                        eNB_CommitID = env.GIT_COMMIT
+                    } else {
+                        eNB_CommitID = params.eNB_CommitID
+                    }
+                    echo "eNB_CommitID          :   ${eNB_CommitID}"
+                    if (params.eNB_mergeRequest != null) {
+                        eNB_AllowMergeRequestProcess = params.eNB_mergeRequest
+                        if (eNB_AllowMergeRequestProcess) {
+                            if (params.eNB_TargetBranch != null) {
+                                eNB_TargetBranch = params.eNB_TargetBranch
+                            } else {
+                                eNB_TargetBranch = 'develop'
+                            }
+                            echo "eNB_TargetBranch      :   ${eNB_TargetBranch}"
+                        }
+                    }
 
-          echo '\u2705 \u001B[32mVerify Labels\u001B[0m'
-          if ("MERGE".equals(env.gitlabActionType)) {
-            LABEL_CHECK = sh returnStdout: true, script: 'ci-scripts/checkGitLabMergeRequestLabels.sh --mr-id ' + env.gitlabMergeRequestIid
-            LABEL_CHECK = LABEL_CHECK.trim()
-            if (LABEL_CHECK == 'NONE') {
-              def message = "OAI " + JOB_NAME + " build (" + BUILD_ID + "): Your merge request should have one of the mandatory labels:\n\n"
-              message += " - ~documentation (don't perform any stages)\n"
-              message += " - ~BUILD-ONLY (execute only build stages)\n"
-              message += " - ~4G-LTE (perform 4G tests)\n"
-              message += " - ~5G-NR (perform 5G tests)\n"
-              message += " - ~CI (perform both 4G and 5G tests)\n\n"
-              message += "Not performing CI due to lack of labels"
-              addGitLabMRComment comment: message
-              error('Not performing CI due to lack of labels')
-            } else if (LABEL_CHECK == 'FULL') {
-              do4Gtest = true
-              do5Gtest = true
-            } else if (LABEL_CHECK == "SHORTEN-4G") {
-              do4Gtest = true
-            } else if (LABEL_CHECK == 'SHORTEN-5G') {
-              do5Gtest = true
-            } else if (LABEL_CHECK == 'documentation') {
-              doBuild = false
-            } else {
-              // is "BUILD-ONLY", will only build
+                    if (params.EPC_IPAddress == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.EPC_Type == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.EPC_SourceCodePath == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.EPC_Credentials == null) {
+                        allParametersPresent = false
+                    }
+
+                    if (params.ADB_IPAddress == null) {
+                        allParametersPresent = false
+                    }
+                    if (params.ADB_Credentials == null) {
+                        allParametersPresent = false
+                    }
+
+                    if (allParametersPresent) {
+                        echo "All parameters are present"
+                        if (eNB_AllowMergeRequestProcess) {
+                            sh "git fetch"
+                            sh "./ci-scripts/doGitLabMerge.sh --src-branch ${eNB_Branch} --src-commit ${eNB_CommitID} --target-branch ${eNB_TargetBranch} --target-commit latest"
+                        } else {
+                            sh "git fetch"
+                            sh "git checkout -f ${eNB_CommitID}"
+                        }
+                    } else {
+                        echo "Some parameters are missing"
+                        sh "./ci-scripts/fail.sh"
+                    }
+                }
             }
-          } else {
-            do4Gtest = true
-            do5Gtest = true
-          }
         }
-      }
-    }
-    // Build Stages are Mandatory
-    // Later we will add a Ubuntu20 build
-    }
         stage ("Build and Test") {
             steps {
                 script {
@@ -102,20 +196,22 @@ pipeline {
                         }
                         withCredentials([
                             [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.eNB_Credentials}", usernameVariable: 'eNB_Username', passwordVariable: 'eNB_Password'],
+                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.eNB1_Credentials}", usernameVariable: 'eNB1_Username', passwordVariable: 'eNB1_Password'],
+                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.eNB2_Credentials}", usernameVariable: 'eNB2_Username', passwordVariable: 'eNB2_Password'],
                             [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password'],
                             [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.ADB_Credentials}", usernameVariable: 'ADB_Username', passwordVariable: 'ADB_Password']
                         ]) {
                             sh "python3 main.py --mode=InitiateHtml --ranRepository=${eNB_Repository} --ranBranch=${eNB_Branch} --ranCommitID=${eNB_CommitID} --ranAllowMerge=${eNB_AllowMergeRequestProcess} --ranTargetBranch=${eNB_TargetBranch} --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password} ${mainPythonAllXmlFiles}"
                             String[] myXmlTestSuite = testXMLFile.split("\\r?\\n")
                             for (xmlFile in myXmlTestSuite) {
-                            if (fileExists(xmlFile)) {
-                                try {
-                                    sh "python3 main.py --mode=TesteNB --eNBIPAddress=${params.eNB_IPAddress} --ranRepository=${eNB_Repository} --ranBranch=${eNB_Branch} --ranCommitID=${eNB_CommitID} --ranAllowMerge=${eNB_AllowMergeRequestProcess} --ranTargetBranch=${eNB_TargetBranch} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password} --eNBSourceCodePath=${params.eNB_SourceCodePath} --EPCIPAddress=${params.EPC_IPAddress} --EPCType=${params.EPC_Type} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCSourceCodePath=${params.EPC_SourceCodePath} --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password} --XMLTestFile=${xmlFile}"
-                                } catch (Exception e) {
-                                    currentBuild.result = 'FAILURE'
-                                    buildStageStatus = false
+                                if (fileExists(xmlFile)) {
+                                    try {
+                                        sh "python3 main.py --mode=TesteNB --ranRepository=${eNB_Repository} --ranBranch=${eNB_Branch} --ranCommitID=${eNB_CommitID} --ranAllowMerge=${eNB_AllowMergeRequestProcess} --ranTargetBranch=${eNB_TargetBranch} --eNBIPAddress=${params.eNB_IPAddress} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password} --eNBSourceCodePath=${params.eNB_SourceCodePath} --eNB1IPAddress=${params.eNB1_IPAddress} --eNB1UserName=${eNB1_Username} --eNB1Password=${eNB1_Password} --eNB1SourceCodePath=${params.eNB1_SourceCodePath} --eNB2IPAddress=${params.eNB2_IPAddress} --eNB2UserName=${eNB2_Username} --eNB2Password=${eNB2_Password} --eNB2SourceCodePath=${params.eNB2_SourceCodePath} --EPCIPAddress=${params.EPC_IPAddress} --EPCType=${params.EPC_Type} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCSourceCodePath=${params.EPC_SourceCodePath} --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password} --XMLTestFile=${xmlFile}"
+                                    } catch (Exception e) {
+                                        currentBuild.result = 'FAILURE'
+                                        buildStageStatus = false
+                                    }
                                 }
-                            }
                             }
                             sh "python3 main.py --mode=FinalizeHtml --finalStatus=${buildStageStatus} --eNBIPAddress=${params.eNB_IPAddress} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password}"
                         }
@@ -138,13 +234,6 @@ pipeline {
                             sh "python3 ci-scripts/main.py --mode=TerminateUE --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password}"
                         }
                     }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termUE] = true
-                            }
-                        }
-                    }
                 }
                 stage('Terminate eNB') {
                     steps {
@@ -153,13 +242,6 @@ pipeline {
                             [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.eNB_Credentials}", usernameVariable: 'eNB_Username', passwordVariable: 'eNB_Password']
                         ]) {
                             sh "python3 ci-scripts/main.py --mode=TerminateeNB --eNBIPAddress=${params.eNB_IPAddress} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password}"
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termENB] = true
-                            }
                         }
                     }
                 }
@@ -176,13 +258,6 @@ pipeline {
                             sh "python3 ci-scripts/main.py --mode=TerminateSPGW --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
                         }
                     }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termSPGW] = true
-                            }
-                        }
-                    }
                 }
                 stage('Terminate MME') {
                     // Bypassing this stage if EPC server is not defined
@@ -197,13 +272,6 @@ pipeline {
                             sh "python3 ci-scripts/main.py --mode=TerminateMME --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
                         }
                     }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termMME] = true
-                            }
-                        }
-                    }
                 }
                 stage('Terminate HSS') {
                     // Bypassing this stage if EPC server is not defined
@@ -216,13 +284,6 @@ pipeline {
                             [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password']
                         ]) {
                             sh "python3 ci-scripts/main.py --mode=TerminateHSS --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termHSS] = true
-                            }
                         }
                     }
                 }
@@ -400,423 +461,5 @@ pipeline {
                 }
             }
         }
-        // Making sure that we really shutdown every thing before leaving
-        failure {
-            script {
-                if ((!termStatusArray[termUE]) && (params.ADB_IPAddress != "none")) {
-                    withCredentials([
-                        [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.ADB_Credentials}", usernameVariable: 'ADB_Username', passwordVariable: 'ADB_Password']
-                    ]) {
-                        sh "python3 ci-scripts/main.py --mode=TerminateUE --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password}"
-                    }
-                }
-                if (!termStatusArray[termENB]) {
-                    withCredentials([
-                        [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.eNB_Credentials}", usernameVariable: 'eNB_Username', passwordVariable: 'eNB_Password']
-                    ]) {
-                        sh "python3 ci-scripts/main.py --mode=TerminateeNB --eNBIPAddress=${params.eNB_IPAddress} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password}"
-                    }
-                }
-                if ((!termStatusArray[termSPGW]) && (params.EPC_IPAddress != "none")) {
-                    withCredentials([
-                        [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password']
-                    ]) {
-                        sh "python3 ci-scripts/main.py --mode=TerminateSPGW --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
-                    }
-                }
-                if ((!termStatusArray[termMME]) && (params.EPC_IPAddress != "none")) {
-                    withCredentials([
-                        [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password']
-                    ]) {
-                        sh "python3 ci-scripts/main.py --mode=TerminateMME --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
-                    }
-                }
-                if ((!termStatusArray[termHSS]) && (params.EPC_IPAddress != "none")) {
-                    withCredentials([
-                        [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password']
-                    ]) {
-                        sh "python3 ci-scripts/main.py --mode=TerminateHSS --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
-                    }
-                }
-         
-    // stage ("Image Building Processes") {
-    //   when { expression {doBuild} }
-    //   parallel {
-    //     stage ("Ubuntu18-Image-Builder") {
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-Ubuntu18-Image-Builder', 'Ubuntu18-Image-Builder')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-Ubuntu18-Image-Builder')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //     stage ("RHEL8-Cluster-Image-Builder") {
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-RHEL8-Cluster-Image-Builder', 'RHEL8-Cluster-Image-Builder')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-RHEL8-Cluster-Image-Builder')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //     stage ("cppcheck") {
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-cppcheck', 'cppcheck')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-cppcheck')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-    stage ("Image Test Processes") {
-      when { expression {doBuild} }
-      parallel {
-        stage ("PhySim-Cluster") {
-          when { expression {do4Gtest || do5Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-PhySim-Cluster', 'PhySim-Cluster')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-PhySim-Cluster')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        stage ("RF-Sim-Test-4G") {
-          when { expression {do4Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-RF-Sim-Test-4G', 'RF-Sim-Test-4G')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-RF-Sim-Test-4G')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        stage ("RF-Sim-Test-5G") {
-          when { expression {do5Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-RF-Sim-Test-5G', 'RF-Sim-Test-5G')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-RF-Sim-Test-5G')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        stage ("L2-Sim-Test-4G") {
-          when { expression {do4Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-L2-Sim-Test-4G', 'L2-Sim-Test-4G')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-L2-Sim-Test-4G')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        stage ("L2-Sim-Test-5G") {
-          when { expression {do5Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-L2-Sim-Test-5G', 'L2-Sim-Test-5G')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-L2-Sim-Test-5G')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        stage ("NSA-B200-Module-LTEBOX-Container") {
-          when { expression {do4Gtest || do5Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-NSA-B200-Module-LTEBOX-Container', 'NSA-B200-Module-LTEBOX-Container')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-NSA-B200-Module-LTEBOX-Container')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        stage ("SA-B200-Module-SABOX-Container") {
-          when { expression {do5Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-SA-B200-Module-SABOX-Container', 'SA-B200-Module-SABOX-Container')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-SA-B200-Module-SABOX-Container')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        stage ("gNB-N300-Timing-Phytest-LDPC") {
-          when { expression {do5Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-gNB-N300-Timing-Phytest-LDPC', 'gNB-N300-Timing-Phytest-LDPC')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-gNB-N300-Timing-Phytest-LDPC')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-        //avra is offline, re-enable once it is available
-        //stage ("T1-Offload-Test") {
-        //  when { expression {do5Gtest} }
-        //  steps {
-        //    script {
-        //      triggerSlaveJob ('RAN-T1-Offload-Test', 'T1-Offload-Test')
-        //    }
-        //  }
-        //  post {
-        //    always {
-        //      script {
-        //        finalizeSlaveJob('RAN-T1-Offload-Test')
-        //      }
-        //    }
-        //    failure {
-        //      script {
-        //        currentBuild.result = 'FAILURE'
-        //      }
-        //    }
-        //  }
-        //}
-      }
     }
-    // stage ("DockerHub-Push") {
-    //   when { expression {doBuild && "PUSH".equals(env.gitlabActionType)} }
-    //   steps {
-    //     script {
-    //       triggerSlaveJob ('RAN-DockerHub-Push', 'DockerHub-Push')
-    //     }
-    //   }
-    //   post {
-    //     failure {
-    //       script {
-    //         echo "Push to Docker-Hub KO"
-    //         currentBuild.result = 'FAILURE'
-    //       }
-    //     }
-    //   }
-    // }
-  }
-  post {
-    always {
-      script {
-        def eSubject = JOB_NAME + ' - Build # ' + BUILD_ID + ' - ' + currentBuild.result + '!'
-        def eBody = "Hi,\n\n"
-        eBody += "Here are attached HTML report files for " + JOB_NAME + "  - Build # " + BUILD_ID + " - " + currentBuild.result + "!\n\n"
-        eBody += "Regards,\n"
-        eBody += "OAI CI Team"
-        emailext attachmentsPattern: '*results*.html',
-           body: eBody,
-           replyTo: 'no-reply@openairinterface.org',
-           subject: eSubject,
-           to: gitCommitAuthorEmailAddr
-
-        if (fileExists('.git/CI_COMMIT_MSG')) {
-          sh "rm -f .git/CI_COMMIT_MSG"
-        }
-      }
-    }
-    success {
-      script {
-        def message = "OAI " + JOB_NAME + " build (" + BUILD_ID + "): passed (" + BUILD_URL + ")"
-        if ("MERGE".equals(env.gitlabActionType)) {
-          addGitLabMRComment comment: message
-        }
-        echo "Pipeline is SUCCESSFUL"
-      }
-    }
-    failure {
-      script {
-        def message = "OAI " + JOB_NAME + " build (" + BUILD_ID + "): failed (" + BUILD_URL + ")"
-        if ("MERGE".equals(env.gitlabActionType)) {
-          addGitLabMRComment comment: message
-        }
-        echo "Pipeline FAILED"
-      }
-    }
-  }
-}
-
-// ----  Slave Job functions
-
-def triggerSlaveJob (jobName, gitlabStatusName) {
-  if ("MERGE".equals(env.gitlabActionType)) {
-    MR_NUMBER = env.gitlabMergeRequestIid
-  } else {
-    MR_NUMBER = 'develop'
-  }
-  // Workaround for the "cancelled" GitLab pipeline notification
-  // The slave job is triggered with the propagate false so the following commands are executed
-  // Its status is now PASS/SUCCESS from a stage pipeline point of view
-  // localStatus variable MUST be analyzed to properly assess the status
-  localStatus = build job: jobName,
-    parameters: [
-      string(name: 'eNB_Repository', value: String.valueOf(GIT_URL)),
-      string(name: 'eNB_Branch', value: String.valueOf(env.gitlabSourceBranch)),
-      string(name: 'eNB_CommitID', value: String.valueOf(env.gitlabMergeRequestLastCommit)),
-      string(name: 'eNB_MR', value: String.valueOf(MR_NUMBER)),
-      booleanParam(name: 'eNB_mergeRequest', value: "MERGE".equals(env.gitlabActionType)),
-      string(name: 'eNB_TargetBranch', value: String.valueOf(env.gitlabTargetBranch))
-    ], propagate: false
-  localResult = localStatus.getResult()
-  echo "${jobName} Slave Job status is ${localResult}"
-  gitlabCommitStatus(name: gitlabStatusName) {
-    if (localStatus.resultIsBetterOrEqualTo('SUCCESS')) {
-       echo "${jobName} Slave Job is OK"
-    } else {
-       echo "${jobName} Slave Job is KO"
-       sh "ci-scripts/fail.sh"
-    }
-  }
-}
-
-def triggerSlaveJobNoGitLab (jobName) {
-  if ("MERGE".equals(env.gitlabActionType)) {
-    MR_NUMBER = env.gitlabMergeRequestIid
-  } else {
-    MR_NUMBER = 'develop'
-  }
-  // Workaround for the "cancelled" GitLab pipeline notification
-  // The slave job is triggered with the propagate false so the following commands are executed
-  // Its status is now PASS/SUCCESS from a stage pipeline point of view
-  // localStatus variable MUST be analyzed to properly assess the status
-  localStatus = build job: jobName,
-    parameters: [
-      string(name: 'eNB_Repository', value: String.valueOf(GIT_URL)),
-      string(name: 'eNB_Branch', value: String.valueOf(env.gitlabSourceBranch)),
-      string(name: 'eNB_CommitID', value: String.valueOf(env.gitlabMergeRequestLastCommit)),
-      string(name: 'eNB_MR', value: String.valueOf(MR_NUMBER)),
-      booleanParam(name: 'eNB_mergeRequest', value: "MERGE".equals(env.gitlabActionType)),
-      string(name: 'eNB_TargetBranch', value: String.valueOf(env.gitlabTargetBranch))
-    ], propagate: false
-  localResult = localStatus.getResult()
-  echo "${jobName} Slave Job status is ${localResult}"
-  if (localStatus.resultIsBetterOrEqualTo('SUCCESS')) {
-     echo "${jobName} Slave Job is OK"
-  } else {
-     echo "${jobName} Slave Job is KO"
-     sh "ci-scripts/fail.sh"
-  }
-}
-
-def finalizeSlaveJob(jobName) {
-  // In case of any non-success, we are retrieving the HTML report of the last completed
-  // slave job. The only drop-back is that we may retrieve the HTML report of a previous build
-  fileName = "test_results-${jobName}.html"
-  if (!fileExists(fileName)) {
-    copyArtifacts(projectName: jobName,
-      filter: 'test_results*.html',
-      selector: lastCompleted())
-    if (fileExists(fileName)) {
-      sh "sed -i -e 's#TEMPLATE_BUILD_TIME#${JOB_TIMESTAMP}#' ${fileName}"
-      archiveArtifacts artifacts: fileName
-    }
-  }
 }
