@@ -34,6 +34,7 @@ def pythonTestXmlFile = [
 "xml_files/formatting_check.xml",
 "xml_files/container_image_build.xml"
 ]
+def mainPythonAllXmlFiles = ""
 
 pipeline {
   agent any
