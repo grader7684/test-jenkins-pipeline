@@ -114,18 +114,18 @@ pipeline {
                         testStageName = 'Template Test Stage'
                     }
 
-                    if (params.smartphonesResource == null) {
-                        allParametersPresent = false
-                    }
-                    if (params.eNB_IPAddress == null) {
-                        allParametersPresent = false
-                    }
-                    if (params.eNB_SourceCodePath == null) {
-                        allParametersPresent = false
-                    }
-                    if (params.eNB_Credentials == null) {
-                        allParametersPresent = false
-                    }
+                    // if (params.smartphonesResource == null) {
+                    //     allParametersPresent = false
+                    // }
+                    // if (params.eNB_IPAddress == null) {
+                    //     allParametersPresent = false
+                    // }
+                    // if (params.eNB_SourceCodePath == null) {
+                    //     allParametersPresent = false
+                    // }
+                    // if (params.eNB_Credentials == null) {
+                    //     allParametersPresent = false
+                    // }
                     // the following 4 parameters should be pushed by the master trigger
                     // if not present, take the job GIT variables (used for developing)
                     if (params.eNB_Repository == null) {
@@ -161,24 +161,24 @@ pipeline {
                         }
                     }
 
-                    if (params.EPC_IPAddress == null) {
-                        allParametersPresent = false
-                    }
-                    if (params.EPC_Type == null) {
-                        allParametersPresent = false
-                    }
-                    if (params.EPC_SourceCodePath == null) {
-                        allParametersPresent = false
-                    }
-                    if (params.EPC_Credentials == null) {
-                        allParametersPresent = false
-                    }
+                    // if (params.EPC_IPAddress == null) {
+                    //     allParametersPresent = false
+                    // }
+                    // if (params.EPC_Type == null) {
+                    //     allParametersPresent = false
+                    // }
+                    // if (params.EPC_SourceCodePath == null) {
+                    //     allParametersPresent = false
+                    // }
+                    // if (params.EPC_Credentials == null) {
+                    //     allParametersPresent = false
+                    // }
 
-                    if (params.ADB_IPAddress == null) {
-                        allParametersPresent = false
-                    }
-                    if (params.ADB_Credentials == null) {
-                        allParametersPresent = false
+                    // if (params.ADB_IPAddress == null) {
+                    //     allParametersPresent = false
+                    // }
+                    // if (params.ADB_Credentials == null) {
+                    //     allParametersPresent = false
                     }
 
                     if (allParametersPresent) {
