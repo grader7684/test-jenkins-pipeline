@@ -385,7 +385,7 @@ pipeline {
               triggerSlaveJob ('RAN-L2-Sim-Test-5G', 'L2-Sim-Test-5G')
             }
           }
-          post {
+          post {  
             always {
               script {
                 finalizeSlaveJob('RAN-L2-Sim-Test-5G')
