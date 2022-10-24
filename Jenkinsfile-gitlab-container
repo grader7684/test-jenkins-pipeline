@@ -25,11 +25,11 @@
 
 // Tags to shorten pipeline duration
 def doBuild = true
-def do4Gtest = false
-def do5Gtest = false
+def do4Gtest = true
+def do5Gtest = true
 
 //
-def gitCommitAuthorEmailAddr = "garethm.rader@gmail.com"
+def gitCommitAuthorEmailAddr = ""
 def pythonTestXmlFile = [
 "xml_files/formatting_check.xml",
 "xml_files/container_image_build.xml"
