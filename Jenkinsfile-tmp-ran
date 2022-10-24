@@ -60,6 +60,7 @@ def eNB_CommitID
 def eNB_AllowMergeRequestProcess = false
 def eNB_TargetBranch
 
+
 pipeline {
     agent {
         label pythonExecutor
