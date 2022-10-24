@@ -179,7 +179,7 @@ pipeline {
                     // }
                     // if (params.ADB_Credentials == null) {
                     //     allParametersPresent = false
-                    }
+                    // }
 
                     if (allParametersPresent) {
                         echo "All parameters are present"
