@@ -85,7 +85,7 @@ pipeline {
     // Build Stages are Mandatory
     // Later we will add a Ubuntu20 build
     stage ("Image Building Processes") {
-      when { expression {doBuild} }
+      // when { expression {doBuild} }
       // parallel {
       //   stage ("Ubuntu18-Image-Builder") {
       //     steps {
