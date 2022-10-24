@@ -84,217 +84,68 @@ pipeline {
     }
     // Build Stages are Mandatory
     // Later we will add a Ubuntu20 build
-    stage ("Build and Test") {
-            steps {
-                script {
-                    dir ('ci-scripts') {
-                        // echo "\u2705 \u001B[32m${testStageName}\u001B[0m"
-                        echo "Build and test phase"
-                        // If not present picking a default XML file
-                        if (params.pythonTestXmlFile == null) {
-                            // picking default
-                            testXMLFile = 'xml_files/enb_usrpB210_band7_50PRB.xml'
-                            echo "Test XML file(default):   ${testXMLFile}"
-                            mainPythonAllXmlFiles += "--XMLTestFile=" + testXMLFile + " "
-                        } else {
-                            String[] myXmlTestSuite = testXMLFile.split("\\r?\\n")
-                            for (xmlFile in myXmlTestSuite) {
-                                if (fileExists(xmlFile)) {
-                                    mainPythonAllXmlFiles += "--XMLTestFile=" + xmlFile + " "
-                                    echo "Test XML file         :   ${xmlFile}"
-                                }
-                            }
-                        }
-                        withCredentials([
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.eNB_Credentials}", usernameVariable: 'eNB_Username', passwordVariable: 'eNB_Password'],
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password'],
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.ADB_Credentials}", usernameVariable: 'ADB_Username', passwordVariable: 'ADB_Password']
-                        ]) {
-                            sh "python3 main.py --mode=InitiateHtml --ranRepository=${eNB_Repository} --ranBranch=${eNB_Branch} --ranCommitID=${eNB_CommitID} --ranAllowMerge=${eNB_AllowMergeRequestProcess} --ranTargetBranch=${eNB_TargetBranch} --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password} ${mainPythonAllXmlFiles}"
-                            String[] myXmlTestSuite = testXMLFile.split("\\r?\\n")
-                            for (xmlFile in myXmlTestSuite) {
-                            if (fileExists(xmlFile)) {
-                                try {
-                                    sh "python3 main.py --mode=TesteNB --eNBIPAddress=${params.eNB_IPAddress} --ranRepository=${eNB_Repository} --ranBranch=${eNB_Branch} --ranCommitID=${eNB_CommitID} --ranAllowMerge=${eNB_AllowMergeRequestProcess} --ranTargetBranch=${eNB_TargetBranch} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password} --eNBSourceCodePath=${params.eNB_SourceCodePath} --EPCIPAddress=${params.EPC_IPAddress} --EPCType=${params.EPC_Type} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCSourceCodePath=${params.EPC_SourceCodePath} --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password} --XMLTestFile=${xmlFile}"
-                                } catch (Exception e) {
-                                    currentBuild.result = 'FAILURE'
-                                    buildStageStatus = false
-                                }
-                            }
-                            }
-                            sh "python3 main.py --mode=FinalizeHtml --finalStatus=${buildStageStatus} --eNBIPAddress=${params.eNB_IPAddress} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password}"
-                        }
-                    }
-                }
+    stage ("Image Building Processes") {
+      when { expression {doBuild} }
+      // parallel {
+      //   stage ("Ubuntu18-Image-Builder") {
+      //     steps {
+      //       script {
+      //         triggerSlaveJob ('RAN-Ubuntu18-Image-Builder', 'Ubuntu18-Image-Builder')
+      //       }
+      //     }
+      //     post {
+      //       always {
+      //         script {
+      //           finalizeSlaveJob('RAN-Ubuntu18-Image-Builder')
+      //         }
+      //       }
+      //       failure {
+      //         script {
+      //           currentBuild.result = 'FAILURE'
+      //         }
+      //       }
+      //     }
+        // }
+        // stage ("RHEL8-Cluster-Image-Builder") {
+        //   steps {
+        //     script {
+        //       triggerSlaveJob ('RAN-RHEL8-Cluster-Image-Builder', 'RHEL8-Cluster-Image-Builder')
+        //     }
+        //   }
+        //   post {
+        //     always {
+        //       script {
+        //         finalizeSlaveJob('RAN-RHEL8-Cluster-Image-Builder')
+        //       }
+        //     }
+        //     failure {
+        //       script {
+        //         currentBuild.result = 'FAILURE'
+        //       }
+        //     }
+        //   }
+        // }
+        stage ("cppcheck") {
+          steps {
+            script {
+              triggerSlaveJob ('RAN-cppcheck', 'cppcheck')
             }
-        }
-        stage ("Terminate") {
-            parallel {
-                stage('Terminate UE') {
-                    // Bypassing this stage if there are no abd server defined
-                    when {
-                      expression { params.ADB_IPAddress != "none" }
-                    }
-                    steps {
-                        echo '\u2705 \u001B[32mTerminate UE\u001B[0m'
-                        withCredentials([
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.ADB_Credentials}", usernameVariable: 'ADB_Username', passwordVariable: 'ADB_Password']
-                        ]) {
-                            sh "python3 ci-scripts/main.py --mode=TerminateUE --ADBIPAddress=${params.ADB_IPAddress} --ADBUserName=${ADB_Username} --ADBPassword=${ADB_Password}"
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termUE] = true
-                            }
-                        }
-                    }
-                }
-                stage('Terminate eNB') {
-                    steps {
-                        echo '\u2705 \u001B[32mTerminate eNB\u001B[0m'
-                        withCredentials([
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.eNB_Credentials}", usernameVariable: 'eNB_Username', passwordVariable: 'eNB_Password']
-                        ]) {
-                            sh "python3 ci-scripts/main.py --mode=TerminateeNB --eNBIPAddress=${params.eNB_IPAddress} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password}"
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termENB] = true
-                            }
-                        }
-                    }
-                }
-                stage('Terminate SPGW') {
-                    // Bypassing this stage if EPC server is not defined
-                    when {
-                      expression { params.EPC_IPAddress != "none" }
-                    }
-                    steps {
-                        echo '\u2705 \u001B[32mTerminate SPGW\u001B[0m'
-                        withCredentials([
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password']
-                        ]) {
-                            sh "python3 ci-scripts/main.py --mode=TerminateSPGW --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termSPGW] = true
-                            }
-                        }
-                    }
-                }
-                stage('Terminate MME') {
-                    // Bypassing this stage if EPC server is not defined
-                    when {
-                      expression { params.EPC_IPAddress != "none" }
-                    }
-                    steps {
-                        echo '\u2705 \u001B[32mTerminate MME\u001B[0m'
-                        withCredentials([
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password']
-                        ]) {
-                            sh "python3 ci-scripts/main.py --mode=TerminateMME --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termMME] = true
-                            }
-                        }
-                    }
-                }
-                stage('Terminate HSS') {
-                    // Bypassing this stage if EPC server is not defined
-                    when {
-                      expression { params.EPC_IPAddress != "none" }
-                    }
-                    steps {
-                        echo '\u2705 \u001B[32mTerminate HSS\u001B[0m'
-                        withCredentials([
-                            [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.EPC_Credentials}", usernameVariable: 'EPC_Username', passwordVariable: 'EPC_Password']
-                        ]) {
-                            sh "python3 ci-scripts/main.py --mode=TerminateHSS --EPCIPAddress=${params.EPC_IPAddress} --EPCUserName=${EPC_Username} --EPCPassword=${EPC_Password} --EPCType=${params.EPC_Type} --EPCSourceCodePath=${params.EPC_SourceCodePath}"
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                termStatusArray[termHSS] = true
-                            }
-                        }
-                    }
-                }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-cppcheck')
+              }
             }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
         }
-    // stage ("Image Building Processes") {
-    //   when { expression {doBuild} }
-    //   parallel {
-    //     stage ("Ubuntu18-Image-Builder") {
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-Ubuntu18-Image-Builder', 'Ubuntu18-Image-Builder')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-Ubuntu18-Image-Builder')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //     stage ("RHEL8-Cluster-Image-Builder") {
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-RHEL8-Cluster-Image-Builder', 'RHEL8-Cluster-Image-Builder')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-RHEL8-Cluster-Image-Builder')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //     stage ("cppcheck") {
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-cppcheck', 'cppcheck')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-cppcheck')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
+      // }
+    }
     stage ("Image Test Processes") {
       when { expression {doBuild} }
       parallel {
