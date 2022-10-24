@@ -54,11 +54,11 @@ termStatusArray[termHSS] = false
 
 // Global Parameters. Normally they should be populated when the master job
 // triggers the slave job with parameters
-def eNB_Repository = "https://gitlab.eurecom.fr/oai/openairinterface5g.git"
-def eNB_Branch = "ci-analysis-cluster"
-def eNB_CommitID = "55d13bd19a04591ba7bb4700d33490e03e6ef16a"
+def eNB_Repository = params.eNB_Repository
+def eNB_Branch = params.eNB_Branch
+def eNB_CommitID = params.eNB_CommitID
 def eNB_AllowMergeRequestProcess = false
-def eNB_TargetBranch = "develop"
+def eNB_TargetBranch = params.eNB_TargetBranch
 
 
 pipeline {
