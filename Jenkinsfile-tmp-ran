@@ -143,8 +143,8 @@ pipeline {
                     }
                     echo "eNB_Branch            :   ${eNB_Branch}"
                     if (params.eNB_CommitID == null) {
-                        // eNB_CommitID = env.GIT_COMMIT
-                        eNB_CommitID = "55d13bd19a04591ba7bb4700d33490e03e6ef16a"
+                        eNB_CommitID = env.GIT_COMMIT
+                        // eNB_CommitID = "55d13bd19a04591ba7bb4700d33490e03e6ef16a"
                     } else {
                         eNB_CommitID = params.eNB_CommitID
                     }
