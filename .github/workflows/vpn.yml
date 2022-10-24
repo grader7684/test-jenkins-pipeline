@@ -20,7 +20,7 @@ jobs:
           USER_KEY: ${{ secrets.USER_KEY }}
       - name: Check Connect VPN
         run: echo ${CA_CRT}
-        run: echo ${{ steps.connect_vpn.outputs.STATUS }}
+        # run: echo ${{ steps.connect_vpn.outputs.STATUS }}
       - name: kill vpn
         if: always()
         run: sudo killall openvpn
