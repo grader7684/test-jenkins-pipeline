@@ -97,7 +97,6 @@ pipeline {
         credentials(name: 'ADB_Credentials', defaultValue: 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX', credentialType: "Username with password", required: true, description: 'Credentials for ADB')
     }
     */
-
     stages {
         stage ("Verify Parameters") {
             steps {
