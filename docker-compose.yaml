@@ -3,7 +3,14 @@ services:
   cn:
     # image: ubuntu:16.04
     build: .
-    # restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2000M
+        reservations:
+          cpus: '0.0001'
+          memory: 20M
     container_name: pipeline_cn
     ports:
       - "3000:3000"
