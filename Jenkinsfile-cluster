@@ -60,12 +60,12 @@ pipeline {
   agent {
     label pythonExecutor
   }
-  options {
-    disableConcurrentBuilds()
-    timestamps()
-    ansiColor('xterm')
-    lock(extra: lockResources)
-  }
+  // options {
+  //   disableConcurrentBuilds()
+  //   timestamps()
+  //   ansiColor('xterm')
+  //   lock(extra: lockResources)
+  // }
 
   stages {
     stage ('Verify Parameters') {
