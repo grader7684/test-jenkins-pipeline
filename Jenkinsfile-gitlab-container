@@ -178,7 +178,6 @@ pipeline {
           when { expression {do5Gtest} }
           steps {
             script {
-              echo "here"
               triggerSlaveJob ('RAN-gNB-N300-Timing-Phytest-LDPC', 'gNB-N300-Timing-Phytest-LDPC')
             }
           }
@@ -212,7 +211,8 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                echo "PhySim cluster failed"
               }
             }
           }
@@ -232,7 +232,8 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                echo "RF SIM Test 4G failed"
               }
             }
           }
@@ -252,7 +253,8 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                echo "RF Sim test 5g Failed"
               }
             }
           }
