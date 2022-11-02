@@ -54,12 +54,11 @@ termStatusArray[termHSS] = false
 
 // Global Parameters. Normally they should be populated when the master job
 // triggers the slave job with parameters
-def eNB_Repository = params.eNB_Repository
-def eNB_Branch = params.eNB_Branch
-def eNB_CommitID = params.eNB_CommitID
+def eNB_Repository
+def eNB_Branch
+def eNB_CommitID
 def eNB_AllowMergeRequestProcess = false
-def eNB_TargetBranch = params.eNB_TargetBranch
-
+def eNB_TargetBranch
 
 pipeline {
     agent {
@@ -96,7 +95,6 @@ pipeline {
         credentials(name: 'ADB_Credentials', defaultValue: 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX', credentialType: "Username with password", required: true, description: 'Credentials for ADB')
     }
     */
-
     stages {
         stage ("Verify Parameters") {
             steps {
@@ -177,6 +175,7 @@ pipeline {
                     if (params.ADB_Credentials == null) {
                         allParametersPresent = false
                     }
+
                     if (allParametersPresent) {
                         echo "All parameters are present"
                         if (eNB_AllowMergeRequestProcess) {
@@ -230,9 +229,8 @@ pipeline {
                                 }
                             }
                             }
-                            echo "here"
                             sh "python3 main.py --mode=FinalizeHtml --finalStatus=${buildStageStatus} --eNBIPAddress=${params.eNB_IPAddress} --eNBUserName=${eNB_Username} --eNBPassword=${eNB_Password}"
-                        // }
+                        }
                     }
                 }
             }
@@ -498,6 +496,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             script {
@@ -554,5 +553,4 @@ pipeline {
             }
         }
     }
-}
 }
