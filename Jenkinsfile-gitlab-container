@@ -129,7 +129,9 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                 echo "gnb timing phy test failed"
+
               }
             }
           }
@@ -189,8 +191,7 @@ pipeline {
             }
             failure {
               script {
-                // currentBuild.result = 'FAILURE'
-                 echo "RAN L2 5G test failed"
+                currentBuild.result = 'FAILURE'
               }
             }
           }
