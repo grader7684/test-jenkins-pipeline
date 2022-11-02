@@ -108,69 +108,69 @@ pipeline {
     //     }
     //   }
     // }
-    // stage ("Image Test Processes") {
-    //   when { expression {doBuild} }
-    //   parallel {
-    //     stage ("PhySim-Cluster") {
-    //       when { expression {do4Gtest || do5Gtest} }
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-PhySim-Cluster', 'PhySim-Cluster')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-PhySim-Cluster')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //     stage ("RF-Sim-Test-4G") {
-    //       when { expression {do4Gtest} }
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-RF-Sim-Test-4G', 'RF-Sim-Test-4G')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-RF-Sim-Test-4G')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
-    //     stage ("RF-Sim-Test-5G") {
-    //       when { expression {do5Gtest} }
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-RF-Sim-Test-5G', 'RF-Sim-Test-5G')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-RF-Sim-Test-5G')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             currentBuild.result = 'FAILURE'
-    //           }
-    //         }
-    //       }
-    //     }
+    stage ("Image Test Processes") {
+      when { expression {doBuild} }
+      parallel {
+        stage ("PhySim-Cluster") {
+          when { expression {do4Gtest || do5Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-PhySim-Cluster', 'PhySim-Cluster')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-PhySim-Cluster')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+        stage ("RF-Sim-Test-4G") {
+          when { expression {do4Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-RF-Sim-Test-4G', 'RF-Sim-Test-4G')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-RF-Sim-Test-4G')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+        stage ("RF-Sim-Test-5G") {
+          when { expression {do5Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-RF-Sim-Test-5G', 'RF-Sim-Test-5G')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-RF-Sim-Test-5G')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
         stage ("L2-Sim-Test-4G") {
           when { expression {do4Gtest} }
           steps {
