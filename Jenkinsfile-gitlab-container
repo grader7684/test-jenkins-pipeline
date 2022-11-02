@@ -84,30 +84,30 @@ pipeline {
     }
     // Build Stages are Mandatory
     // Later we will add a Ubuntu20 build
-    stage ("Image Building Processes") {
-      when { expression {doBuild} }
-      parallel {
-        stage ("cppcheck") {
-          steps {
-            script {
-              triggerSlaveJob ('RAN-cppcheck', 'cppcheck')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-cppcheck')
-              }
-            }
-            failure {
-              script {
-                currentBuild.result = 'FAILURE'
-              }
-            }
-          }
-        }
-      }
-    }
+    // stage ("Image Building Processes") {
+    //   when { expression {doBuild} }
+    //   parallel {
+    //     stage ("cppcheck") {
+    //       steps {
+    //         script {
+    //           triggerSlaveJob ('RAN-cppcheck', 'cppcheck')
+    //         }
+    //       }
+    //       post {
+    //         always {
+    //           script {
+    //             finalizeSlaveJob('RAN-cppcheck')
+    //           }
+    //         }
+    //         failure {
+    //           script {
+    //             currentBuild.result = 'FAILURE'
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
     stage ("Image Test Processes") {
       when { expression {doBuild} }
       parallel {
