@@ -1,24 +1,25 @@
 version: "3.9"
 services:
   cn:
-    image: ubuntu:16.04
+    # image: ubuntu:16.04
+    build: .
     # restart: always
-    container_name: pipeline_CN
+    container_name: pipeline_cn
     ports:
       - "3000:3000"
     command:
       - bash
       - -c
       -
-        apt-get update;
-        apt-get install git -y;
-        apt-get -y install sudo;
-        echo done;
+        tail -F anything;
+        # apt-get update;
+        # apt-get install git -y;
+        # apt-get -y install sudo;
   # enb:
   #   # image: ubuntu:16.04 
   #   build: .
   #   restart: always
-  #   container_name: pipeline_eNB
+  #   container_name: pipeline_enb
   #   ports:
   #     - "3001:3001"
   #   command: 
