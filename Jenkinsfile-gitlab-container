@@ -174,131 +174,131 @@ pipeline {
     stage ("Image Test Processes") {
       when { expression {doBuild} }
       parallel {
-        // stage ("gNB-N300-Timing-Phytest-LDPC") {
-        //   when { expression {do5Gtest} }
-        //   steps {
-        //     script {
-        //       echo "here"
-        //       triggerSlaveJob ('RAN-gNB-N300-Timing-Phytest-LDPC', 'gNB-N300-Timing-Phytest-LDPC')
-        //     }
-        //   }
-        //   post {
-        //     always {
-        //       script {
-        //         finalizeSlaveJob('RAN-gNB-N300-Timing-Phytest-LDPC')
-        //       }
-        //     }
-        //     failure {
-        //       script {
-        //         // currentBuild.result = 'FAILURE'
-        //          echo "gnb timing phy test failed"
+        stage ("gNB-N300-Timing-Phytest-LDPC") {
+          when { expression {do5Gtest} }
+          steps {
+            script {
+              echo "here"
+              triggerSlaveJob ('RAN-gNB-N300-Timing-Phytest-LDPC', 'gNB-N300-Timing-Phytest-LDPC')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-gNB-N300-Timing-Phytest-LDPC')
+              }
+            }
+            failure {
+              script {
+                // currentBuild.result = 'FAILURE'
+                 echo "gnb timing phy test failed"
 
-        //       }
-        //     }
-        //   }
-        // }
-        // stage ("PhySim-Cluster") {
-        //   when { expression {do4Gtest || do5Gtest} }
-        //   steps {
-        //     script {
-        //       triggerSlaveJob ('RAN-PhySim-Cluster', 'PhySim-Cluster')
-        //     }
-        //   }
-        //   post {
-        //     always {
-        //       script {
-        //         finalizeSlaveJob('RAN-PhySim-Cluster')
-        //       }
-        //     }
-        //     failure {
-        //       script {
-        //         currentBuild.result = 'FAILURE'
-        //       }
-        //     }
-        //   }
-        // }
-        // stage ("RF-Sim-Test-4G") {
-        //   when { expression {do4Gtest} }
-        //   steps {
-        //     script {
-        //       triggerSlaveJob ('RAN-RF-Sim-Test-4G', 'RF-Sim-Test-4G')
-        //     }
-        //   }
-        //   post {
-        //     always {
-        //       script {
-        //         finalizeSlaveJob('RAN-RF-Sim-Test-4G')
-        //       }
-        //     }
-        //     failure {
-        //       script {
-        //         currentBuild.result = 'FAILURE'
-        //       }
-        //     }
-        //   }
-        // }
-        // stage ("RF-Sim-Test-5G") {
-        //   when { expression {do5Gtest} }
-        //   steps {
-        //     script {
-        //       triggerSlaveJob ('RAN-RF-Sim-Test-5G', 'RF-Sim-Test-5G')
-        //     }
-        //   }
-        //   post {
-        //     always {
-        //       script {
-        //         finalizeSlaveJob('RAN-RF-Sim-Test-5G')
-        //       }
-        //     }
-        //     failure {
-        //       script {
-        //         currentBuild.result = 'FAILURE'
-        //       }
-        //     }
-        //   }
-        // }
-        // stage ("L2-Sim-Test-4G") {
-        //   when { expression {do4Gtest} }
-        //   steps {
-        //     script {
-        //       triggerSlaveJob ('RAN-L2-Sim-Test-4G', 'L2-Sim-Test-4G')
-        //     }
-        //   }
-        //   post {
-        //     always {
-        //       script {
-        //         finalizeSlaveJob('RAN-L2-Sim-Test-4G')
-        //       }
-        //     }
-        //     failure {
-        //       script {
-        //         // currentBuild.result = 'FAILURE'
-        //         echo "RAN L2 4G test failed"
-        //       }
-        //     }
-        //   }
-        // }
-        // stage ("L2-Sim-Test-5G") {
-        //   when { expression {do5Gtest} }
-        //   steps {
-        //     script {
-        //       triggerSlaveJob ('RAN-L2-Sim-Test-5G', 'L2-Sim-Test-5G')
-        //     }
-        //   }
-        //   post {  
-        //     always {
-        //       script {
-        //         finalizeSlaveJob('RAN-L2-Sim-Test-5G')
-        //       }
-        //     }
-        //     failure {
-        //       script {
-        //         // currentBuild.result = 'FAILURE'
-        //         echo "RAN L2 5G test failed"
-        //       }
-        //     }
-        //   }
-        // }
+              }
+            }
+          }
+        }
+        stage ("PhySim-Cluster") {
+          when { expression {do4Gtest || do5Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-PhySim-Cluster', 'PhySim-Cluster')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-PhySim-Cluster')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+        stage ("RF-Sim-Test-4G") {
+          when { expression {do4Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-RF-Sim-Test-4G', 'RF-Sim-Test-4G')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-RF-Sim-Test-4G')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+        stage ("RF-Sim-Test-5G") {
+          when { expression {do5Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-RF-Sim-Test-5G', 'RF-Sim-Test-5G')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-RF-Sim-Test-5G')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+        stage ("L2-Sim-Test-4G") {
+          when { expression {do4Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-L2-Sim-Test-4G', 'L2-Sim-Test-4G')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-L2-Sim-Test-4G')
+              }
+            }
+            failure {
+              script {
+                // currentBuild.result = 'FAILURE'
+                echo "RAN L2 4G test failed"
+              }
+            }
+          }
+        }
+        stage ("L2-Sim-Test-5G") {
+          when { expression {do5Gtest} }
+          steps {
+            script {
+              triggerSlaveJob ('RAN-L2-Sim-Test-5G', 'L2-Sim-Test-5G')
+            }
+          }
+          post {  
+            always {
+              script {
+                finalizeSlaveJob('RAN-L2-Sim-Test-5G')
+              }
+            }
+            failure {
+              script {
+                // currentBuild.result = 'FAILURE'
+                echo "RAN L2 5G test failed"
+              }
+            }
+          }
+        }
         stage ("NSA-B200-Module-LTEBOX-Container") {
           when { expression {do4Gtest || do5Gtest} }
           steps {
