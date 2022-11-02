@@ -93,7 +93,7 @@ pipeline {
               triggerSlaveJob ('RAN-Ubuntu18-Image-Builder', 'Ubuntu18-Image-Builder')
             }
           }
-          
+
           post {
             always {
               script {
@@ -102,7 +102,8 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                echo "Ubuntu18 Image Builder failed"
               }
             }
           }
@@ -121,7 +122,8 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                echo "RHEL8 Cluster Image Builder failed"
               }
             }
           }
