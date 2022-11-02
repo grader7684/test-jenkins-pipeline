@@ -54,8 +54,8 @@ pipeline {
     }
     options {
         disableConcurrentBuilds()
-        ansiColor('xterm')
-        lock(extra: [[resource: ciEpcResource]], resource: ciSmartPhoneResource)
+        // ansiColor('xterm')
+        // lock(extra: [[resource: ciEpcResource]], resource: ciSmartPhoneResource)
     }
     stages {
         stage ("Verify Parameters") {
