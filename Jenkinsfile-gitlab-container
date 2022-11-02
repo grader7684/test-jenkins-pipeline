@@ -217,27 +217,27 @@ pipeline {
             }
           }
         }
-        stage ("L2-Sim-Test-5G") {
-          when { expression {do5Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-L2-Sim-Test-5G', 'L2-Sim-Test-5G')
-            }
-          }
-          post {  
-            always {
-              script {
-                finalizeSlaveJob('RAN-L2-Sim-Test-5G')
-              }
-            }
-            failure {
-              script {
-                // currentBuild.result = 'FAILURE'
-                echo "RAN L2 5G test failed"
-              }
-            }
-          }
-        }
+        // stage ("L2-Sim-Test-5G") {
+        //   when { expression {do5Gtest} }
+        //   steps {
+        //     script {
+        //       triggerSlaveJob ('RAN-L2-Sim-Test-5G', 'L2-Sim-Test-5G')
+        //     }
+        //   }
+        //   post {  
+        //     always {
+        //       script {
+        //         finalizeSlaveJob('RAN-L2-Sim-Test-5G')
+        //       }
+        //     }
+        //     failure {
+        //       script {
+        //         // currentBuild.result = 'FAILURE'
+        //         echo "RAN L2 5G test failed"
+        //       }
+        //     }
+        //   }
+        // }
         stage ("NSA-B200-Module-LTEBOX-Container") {
           when { expression {do4Gtest || do5Gtest} }
           steps {
