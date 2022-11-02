@@ -108,6 +108,26 @@ pipeline {
             }
           }
         }
+        stage ("RHEL8-Image-Builder") {
+          steps {
+            script {
+              triggerSlaveJob ('RAN-RHEL8-Image-Builder', 'RHEL8-Image-Builder')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-RHEL8-Image-Builder')
+              }
+            }
+            failure {
+              script {
+                // currentBuild.result = 'FAILURE'
+                echo "RHEL8 Image Builder failed"
+              }
+            }
+          }
+        }
         stage ("RHEL8-Cluster-Image-Builder") {
           steps {
             script {
@@ -128,6 +148,7 @@ pipeline {
             }
           }
         }
+        
         stage ("cppcheck") {
           steps {
             script {
