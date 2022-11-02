@@ -84,31 +84,69 @@ pipeline {
     }
     // Build Stages are Mandatory
     // Later we will add a Ubuntu20 build
-    // stage ("Image Building Processes") {
-    //   when { expression {doBuild} }
-    //   parallel {
-    //     stage ("cppcheck") {
-    //       steps {
-    //         script {
-    //           triggerSlaveJob ('RAN-cppcheck', 'cppcheck')
-    //         }
-    //       }
-    //       post {
-    //         always {
-    //           script {
-    //             finalizeSlaveJob('RAN-cppcheck')
-    //           }
-    //         }
-    //         failure {
-    //           script {
-    //             // currentBuild.result = 'FAILURE'
-    //             echo "Cpp check failed"
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
+    stage ("Image Building Processes") {
+      when { expression {doBuild} }
+      parallel {
+        stage ("Ubuntu18-Image-Builder") {
+          steps {
+            script {
+              triggerSlaveJob ('RAN-Ubuntu18-Image-Builder', 'Ubuntu18-Image-Builder')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-Ubuntu18-Image-Builder')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+        stage ("RHEL8-Cluster-Image-Builder") {
+          steps {
+            script {
+              triggerSlaveJob ('RAN-RHEL8-Cluster-Image-Builder', 'RHEL8-Cluster-Image-Builder')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-RHEL8-Cluster-Image-Builder')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+        stage ("cppcheck") {
+          steps {
+            script {
+              triggerSlaveJob ('RAN-cppcheck', 'cppcheck')
+            }
+          }
+          post {
+            always {
+              script {
+                finalizeSlaveJob('RAN-cppcheck')
+              }
+            }
+            failure {
+              script {
+                currentBuild.result = 'FAILURE'
+              }
+            }
+          }
+        }
+      }
+    }
+
 
     stage ("Image Test Processes") {
       when { expression {doBuild} }
