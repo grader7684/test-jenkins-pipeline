@@ -100,9 +100,10 @@ pipeline {
               }
             }
             failure {
-              // script {
-              //   currentBuild.result = 'FAILURE'
-              // }
+              script {
+                // currentBuild.result = 'FAILURE'
+                echo "Cpp check failed"
+              }
             }
           }
         }
