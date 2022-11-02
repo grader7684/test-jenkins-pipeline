@@ -109,6 +109,7 @@ pipeline {
     //     }
     //   }
     // }
+
     stage ("Image Test Processes") {
       when { expression {doBuild} }
       parallel {
@@ -116,6 +117,7 @@ pipeline {
           when { expression {do5Gtest} }
           steps {
             script {
+              echo "here"
               triggerSlaveJob ('RAN-gNB-N300-Timing-Phytest-LDPC', 'gNB-N300-Timing-Phytest-LDPC')
             }
           }
