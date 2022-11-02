@@ -36,7 +36,7 @@ services:
   #       apt-get update;
   #       apt-get install git -y;
   #       apt-get -y install sudo;
-  #       git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git;
+  #       do
   #       cd openairinterface5g/;
   #       source oaienv;
   #       cd cmake_targets/;
@@ -50,6 +50,8 @@ services:
   #       ./build_oai -I;
   #       ./build_oai --eNB;
   #       echo done;
+
+  
   # gnb:
   #   build: .
   #   restart: always
