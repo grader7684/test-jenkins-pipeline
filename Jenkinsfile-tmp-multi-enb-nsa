@@ -53,11 +53,11 @@ def StatusForDb = ""
 
 pipeline {
   agent {label pythonExecutor}
-  options {
-    disableConcurrentBuilds()
-    ansiColor('xterm')
-    lock(extra: [[resource: ciSmartPhonesResource2],[resource: ciSmartPhonesResource1]],resource: ciSmartPhonesResource3)
-  }
+  // options {
+  //   disableConcurrentBuilds()
+  //   ansiColor('xterm')
+  //   lock(extra: [[resource: ciSmartPhonesResource2],[resource: ciSmartPhonesResource1]],resource: ciSmartPhonesResource3)
+  // }
   stages {
     stage("Build Init") {
       steps {
