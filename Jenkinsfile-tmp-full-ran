@@ -62,11 +62,11 @@ pipeline {
     agent {
         label pythonExecutor
     }
-    options {
-        disableConcurrentBuilds()
-        ansiColor('xterm')
-        lock(extra: [[resource: oaiUEResource]], resource: ciSmartPhoneResource)
-    }
+    // options {
+    //     disableConcurrentBuilds()
+    //     // ansiColor('xterm')
+    //     lock(extra: [[resource: oaiUEResource]], resource: ciSmartPhoneResource)
+    // }
 
     stages {
         stage ("Verify Parameters") {
