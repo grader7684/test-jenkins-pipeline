@@ -94,6 +94,7 @@ pipeline {
                     if (params.eNB_IPAddress == null) {
                         allParametersPresent = false
                     }
+                    
                     if (params.eNB_SourceCodePath == null) {
                         allParametersPresent = false
                     }
