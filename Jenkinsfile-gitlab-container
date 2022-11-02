@@ -167,7 +167,7 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
               }
             }
           }
@@ -187,7 +187,8 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                echo "RAN L2 5G test failed"
               }
             }
           }
@@ -207,7 +208,8 @@ pipeline {
             }
             failure {
               script {
-                currentBuild.result = 'FAILURE'
+                // currentBuild.result = 'FAILURE'
+                echo "RAN L2 5G test failed"
               }
             }
           }
