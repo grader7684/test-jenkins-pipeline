@@ -176,7 +176,7 @@ pipeline {
                             sh "git checkout -f ${eNB_CommitID}"
                         }
                     } else {
-                        currentBuild.result = 'ABORTED'
+                        currentBuild.result = 'FAILED'
                         error('Stopping early because some parameters are missing')
                     }
                 }
