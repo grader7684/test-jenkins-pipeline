@@ -196,27 +196,27 @@ pipeline {
             }
           }
         }
-        stage ("L2-Sim-Test-4G") {
-          when { expression {do4Gtest} }
-          steps {
-            script {
-              triggerSlaveJob ('RAN-L2-Sim-Test-4G', 'L2-Sim-Test-4G')
-            }
-          }
-          post {
-            always {
-              script {
-                finalizeSlaveJob('RAN-L2-Sim-Test-4G')
-              }
-            }
-            failure {
-              script {
-                // currentBuild.result = 'FAILURE'
-                echo "RAN L2 4G test failed"
-              }
-            }
-          }
-        }
+        // stage ("L2-Sim-Test-4G") {
+        //   when { expression {do4Gtest} }
+        //   steps {
+        //     script {
+        //       triggerSlaveJob ('RAN-L2-Sim-Test-4G', 'L2-Sim-Test-4G')
+        //     }
+        //   }
+        //   post {
+        //     always {
+        //       script {
+        //         finalizeSlaveJob('RAN-L2-Sim-Test-4G')
+        //       }
+        //     }
+        //     failure {
+        //       script {
+        //         // currentBuild.result = 'FAILURE'
+        //         echo "RAN L2 4G test failed"
+        //       }
+        //     }
+        //   }
+        // }
         // stage ("L2-Sim-Test-5G") {
         //   when { expression {do5Gtest} }
         //   steps {
