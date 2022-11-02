@@ -168,6 +168,7 @@ pipeline {
             failure {
               script {
                 // currentBuild.result = 'FAILURE'
+                 echo "RAN L2 5G test failed"
               }
             }
           }
